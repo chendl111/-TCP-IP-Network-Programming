@@ -1,0 +1,67 @@
+1.下列关于进程的说法错误的是？cd
+
+2.调用fork函数将创建子进程，以下关于子进程描述错误的是？acd(a选项我测试过，真的不会销毁)
+
+3.创建子进程时将复制父进程的所有内容，此时的复制对象也包含套接字文件描述符。编写程序验证复制的文件描述符整数值是否与原文件描述符整数值相同。
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/socket.h>
+
+int main(int argc, char *argv[])
+{
+	pid_t pid;
+	int sockfd=socket(PF_INET, SOCK_STREAM, 0);
+	
+	pid=fork();		
+	
+	if(pid==0)
+		printf("Child sock fd: [%d] \n", sockfd);
+	else
+		printf("Parent sock fd: [%d] \n", sockfd);
+	return 0;
+}
+
+显示
+Parent sock fd: [3] 
+Child sock fd: [3] 
+
+4.请说明进程变为僵尸进程的过程及预防措施
+
+僵尸进程是子进程。在子进程结束时，其返回值会传到操作系统，直到返回值被其父进程接收为止，
+该（子）进程会一直作为僵尸进程存在。所以，为了防止这种情况的发生，父进程必须明确接收子进程结束时的返回值。
+
+5.编写程序使其每隔1秒输出简单字符串，并适用于上述时间处理器注册代码
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+
+void ctrl_handler(int sig);
+
+int main(int argc, char *argv[])
+{
+	struct sigaction act;
+	act.sa_handler=ctrl_handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags=0;
+	sigaction(SIGINT, &act, 0);
+
+	while(1)
+	{
+		sleep(1);
+		puts("Have a nice day~");
+	}
+
+	return 0;
+}
+
+
+void ctrl_handler(int sig)
+{
+	char ex;
+	fputs("Do you want exit(Y to exit)? ", stdout);
+	scanf("%c", &ex);
+	if(ex=='y' || ex=='Y')
+		exit(1);
+}

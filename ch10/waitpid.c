@@ -9,12 +9,12 @@ int main(int argc, char *argv[]){
     pid = fork();
 
     if(pid == 0){
-	sleep(5);
+		sleep(15);
     	return 24;
     }else{
 	while(!waitpid(-1,&status,WNOHANG)){
-	    sleep(1);
-	    puts("sleep 1sec.");
+	    sleep(3);
+	    puts("sleep 3sec.");
 	}
 
 	if(WIFEXITED(status)){

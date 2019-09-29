@@ -1,0 +1,67 @@
+1.什么是进程间通信？分别从概念和内存的角度进行说明
+
+概括性地说，进程间通信是指两个进程之间交换数据。但是从内存的角度看，
+可以理解为两个进程共有内存。因为共享的内存区域存在，可以进行数据交换
+
+2.进程间通信需要特殊的IPC机制，这是由操作系统提供的。进程间通信时为何需要操作系统的帮助？
+
+要想实现IPC机制，需要共享的内存，但由于两个进程之间不共享内存，因此需要操作系统的帮助，
+也就是说，两进程共享的内存空间必须由操作系统来提供
+
+3.“管道”是典型的IPC技术。关于管道，请回答如下问题。
+
+管道是进程间交换数据的路径。如何创建该路径?由谁创建？
+
+管道是由pip函数产生的，而实际产生管道的主体是操作系统
+
+为了完成进程间通信，2个进程需同时连接管道。那2个进程如何连接到同一管道？
+
+pipe函数通过输入参数返回管道的输入输出文件描述符。这个文件描述符在fork函数中复制到了其子进程，
+因此，父进程和子进程可以同时访问同一管道。
+
+管道允许进行2个进程间的双向通信。双向通信中需要注意哪些内容？
+
+管道并不管理进程间的数据通信。因此，如果数据流入管道，任何进程都可以读取数据。
+因此，要合理安排共享空间的输入和读取
+
+4.编写示例复习IPC技术，使2个进程相互交换3次字符串…
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#define BUF_SIZE 30
+
+int main(int argc, char *argv[])
+{
+	int fds1[2], fds2[2];
+	char str1[]="Do you like coffee?";
+	char str2[]="I like coffee";
+	char str3[]="I like bread";
+	char * str_arr[]={str1, str2, str3};
+	char buf[BUF_SIZE];
+	pid_t pid;
+	int i;
+	
+	pipe(fds1), pipe(fds2);
+	pid=fork();
+	
+	if(pid==0)
+	{
+		for(i=0; i<3; i++)
+		{
+			write(fds1[1], str_arr[i], strlen(str_arr[i])+1);
+			read(fds2[0], buf, BUF_SIZE);
+			printf("Child proc output: %s \n",  buf);
+		}
+	}
+	else
+	{
+		for(i=0; i<3; i++)
+		{
+			read(fds1[0], buf, BUF_SIZE);
+			printf("Parent proc output: %s \n", buf);
+			write(fds2[1], str_arr[i], strlen(str_arr[i])+1);
+		}
+	}
+	return 0;
+}
